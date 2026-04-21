@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShikshaBridge — Global Education Access Platform</title>
+    <meta name="description" content="Democratizing international education. Smart matching, transparent pricing, end-to-end support for students worldwide.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554' },
+                        accent: { 50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c' },
+                        surface: { 50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a',950:'#020617' }
+                    },
+                    fontFamily: { sans: ['Plus Jakarta Sans','Inter','system-ui','sans-serif'], display: ['Plus Jakarta Sans','sans-serif'] }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        *,*::before,*::after{box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        body{font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif;background:#020617;color:#f8fafc;overflow-x:hidden}
+        ::-webkit-scrollbar{width:8px}
+        ::-webkit-scrollbar-track{background:#0f172a}
+        ::-webkit-scrollbar-thumb{background:#3b82f6;border-radius:4px}
+        #hero-canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+        .glass{background:rgba(15,23,42,0.6);backdrop-filter:blur(20px)saturate(180%);-webkit-backdrop-filter:blur(20px)saturate(180%);border:1px solid rgba(255,255,255,0.08)}
+        .glass-light{background:rgba(255,255,255,0.03);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06)}
+        .gradient-text{background:linear-gradient(135deg,#60a5fa 0%,#a78bfa 50%,#f472b6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .gradient-text-blue{background:linear-gradient(135deg,#3b82f6 0%,#06b6d4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        @keyframes float{0%,100%{transform:translateY(0px)rotate(0deg)}33%{transform:translateY(-20px)rotate(1deg)}66%{transform:translateY(-10px)rotate(-1deg)}}
+        @keyframes floatSlow{0%,100%{transform:translateY(0px)}50%{transform:translateY(-30px)}}
+        @keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(59,130,246,0.3),0 0 60px rgba(59,130,246,0.1)}50%{box-shadow:0 0 40px rgba(59,130,246,0.5),0 0 80px rgba(59,130,246,0.2)}}
+        @keyframes orbit{0%{transform:rotate(0deg)translateX(120px)rotate(0deg)}100%{transform:rotate(360deg)translateX(120px)rotate(-360deg)}}
+        @keyframes orbitReverse{0%{transform:rotate(0deg)translateX(80px)rotate(0deg)}100%{transform:rotate(-360deg)translateX(80px)rotate(360deg)}}
+        @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .magnetic-btn{transition:transform 0.3s cubic-bezier(0.23,1,0.32,1)}
+        .card-hover{transition:all 0.5s cubic-bezier(0.23,1,0.32,1)}
+        .card-hover:hover{transform:translateY(-8px)scale(1.02);box-shadow:0 25px 50px -12px rgba(59,130,246,0.25)}
+        .reveal-text{opacity:0;transform:translateY(40px)}
+        .counter-value{font-variant-numeric:tabular-nums}
+        .noise-overlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")}
+        .custom-cursor{width:20px;height:20px;border:2px solid #3b82f6;border-radius:50%;position:fixed;pointer-events:none;z-index:10000;transition:transform 0.15s ease-out,opacity 0.15s ease-out;mix-blend-mode:difference}
+        .cursor-dot{width:6px;height:6px;background:#3b82f6;border-radius:50%;position:fixed;pointer-events:none;z-index:10001;transition:transform 0.05s ease-out}
+        .loader-screen{position:fixed;inset:0;background:#020617;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column}
+        .loader-ring{width:80px;height:80px;border:3px solid transparent;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite}
+        .marquee-track{display:flex;animation:marquee 30s linear infinite}
+        .glow-blue{box-shadow:0 0 40px rgba(59,130,246,0.3),0 0 80px rgba(59,130,246,0.1)}
+        .section-fade{opacity:0;transform:translateY(60px)}
+        .spotlight{position:relative;overflow:hidden}
+        .spotlight::before{content:'';position:absolute;top:var(--y,50%);left:var(--x,50%);width:300px;height:300px;background:radial-gradient(circle,rgba(59,130,246,0.15) 0%,transparent 70%);transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity 0.3s}
+        .spotlight:hover::before{opacity:1}
+        .accordion-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.23,1,0.32,1)}
+        .accordion-content.open{max-height:500px}
+        @media(max-width:768px){.hero-title{font-size:2.5rem!important}}
+    </style>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <div class="custom-cursor hidden lg:block" id="cursor"></div>
+    <div class="cursor-dot hidden lg:block" id="cursor-dot"></div>
+    
+    <div class="loader-screen" id="loader">
+        <div class="loader-ring mb-6"></div>
+        <div class="text-primary-400 font-semibold tracking-widest text-sm uppercase">Loading ShikshaBridge</div>
+        <div class="mt-2 text-surface-500 text-xs">Preparing your global journey...</div>
+    </div>
+    
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <a href="#" class="flex items-center gap-3 group">
+                    <div class="relative w-10 h-10">
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
+                        <div class="absolute inset-0 bg-surface-950 rounded-xl flex items-center justify-center">
+                            <span class="text-primary-400 font-bold text-lg">SB</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="font-display font-bold text-xl text-white tracking-tight">ShikshaBridge</span>
+                        <span class="block text-[10px] text-surface-400 -mt-1 tracking-widest uppercase">Global Education Access</span>
+                    </div>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-1">
+                    <a href="#features" class="px-4 py-2 text-sm text-surface-300 hover:text-white rounded-lg hover:bg-white/5 transition-all">Features</a>
+                    <a href="#process" class="px-4 py-2 text-sm text-surface-300 hover:text-white rounded-lg hover:bg-white/5 transition-all">Process</a>
+                    <a href="#pricing" class="px-4 py-2 text-sm text-surface-300 hover:text-white rounded-lg hover:bg-white/5 transition-all">Pricing</a>
+                    <a href="#stories" class="px-4 py-2 text-sm text-surface-300 hover:text-white rounded-lg hover:bg-white/5 transition-all">Stories</a>
+                    <a href="#faq" class="px-4 py-2 text-sm text-surface-300 hover:text-white rounded-lg hover:bg-white/5 transition-all">FAQ</a>
+                </div>
+                
+                <div class="hidden lg:flex items-center gap-4">
+                    <a href="#contact" class="magnetic-btn group relative px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-full transition-all overflow-hidden">
+                        <span class="relative z-10 flex items-center gap-2">Start Your Journey<i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i></span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-primary-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </a>
+                </div>
+                
+                <button id="mobile-menu-btn" class="lg:hidden p-2 text-surface-300 hover:text-white">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="mobile-menu" class="lg:hidden hidden glass border-t border-white/5">
+            <div class="px-6 py-4 space-y-2">
+                <a href="#features" class="block py-3 text-surface-300 hover:text-white">Features</a>
+                <a href="#process" class="block py-3 text-surface-300 hover:text-white">Process</a>
+                <a href="#pricing" class="block py-3 text-surface-300 hover:text-white">Pricing</a>
+                <a href="#stories" class="block py-3 text-surface-300 hover:text-white">Stories</a>
+                <a href="#faq" class="block py-3 text-surface-300 hover:text-white">FAQ</a>
+                <a href="#contact" class="block mt-4 px-6 py-3 bg-primary-600 text-white text-center rounded-full font-semibold">Start Your Journey</a>
+            </div>
+        </div>
+    </nav>
+    
+    <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <canvas id="hero-canvas"></canvas>
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface-950/50 to-surface-950 z-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-primary-950/30 via-transparent to-purple-950/30 z-10"></div>
+        
+        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-primary-500/20 rounded-full blur-[100px] animate-pulse z-0"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px] animate-pulse z-0" style="animation-delay:1s"></div>
+        <div class="absolute top-1/2 right-1/3 w-64 h-64 bg-accent-500/10 rounded-full blur-[80px] animate-pulse z-0" style="animation-delay:2s"></div>
+        
+        <div class="relative z-20 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-20">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-light mb-8 reveal-text">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        <span class="text-xs text-surface-300 tracking-wide uppercase">Now Serving 1,200+ Students Worldwide</span>
+                    </div>
+                    
+                    <h1 class="hero-title text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] mb-6">
+                        <span class="reveal-text block">Your Global</span>
+                        <span class="reveal-text block gradient-text">Education</span>
+                        <span class="reveal-text block">Journey Starts</span>
+                        <span class="reveal-text block">Here</span>
+                    </h1>
+                    
+                    <p class="reveal-text text-lg md:text-xl text-surface-400 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
+                        Smart AI-powered matching connects you with the right universities, countries, and funding options. Transparent pricing. Human guidance. Zero hidden fees.
+                    </p>
+                    
+                    <div class="reveal-text flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
+                        <a href="#contact" class="magnetic-btn group relative px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-full transition-all overflow-hidden glow-blue">
+                            <span class="relative z-10 flex items-center justify-center gap-3">Get Free Assessment<i data-lucide="sparkles" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i></span>
+                        </a>
+                        <a href="#process" class="magnetic-btn group px-8 py-4 glass text-white font-semibold rounded-full hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                            <i data-lucide="play-circle" class="w-5 h-5 text-primary-400"></i>See How It Works
+                        </a>
+                    </div>
+                    
+                    <div class="reveal-text flex flex-wrap items-center gap-6 justify-center lg:justify-start text-sm text-surface-500">
+                        <div class="flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-green-400"></i><span>Registered Entity</span></div>
+                        <div class="flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4 text-primary-400"></i><span>Official Invoices</span></div>
+                        <div class="flex items-center gap-2"><i data-lucide="refresh-ccw" class="w-4 h-4 text-accent-400"></i><span>Money-Back Guarantee</span></div>
+                    </div>
+                </div>
+                
+                <div class="hidden lg:block relative">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-64 h-64 relative" style="animation:orbit 20s linear infinite">
+                                <div class="absolute -top-4 left-1/2 -translate-x-1/2 glass px-4 py-2 rounded-xl text-xs text-surface-300 flex items-center gap-2">
+                                    <i data-lucide="graduation-cap" class="w-4 h-4 text-primary-400"></i>University Match
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-48 h-48 relative" style="animation:orbitReverse 15s linear infinite">
+                                <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 glass px-4 py-2 rounded-xl text-xs text-surface-300 flex items-center gap-2">
+                                    <i data-lucide="banknote" class="w-4 h-4 text-green-400"></i>Funding Secured
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="glass rounded-3xl p-8 relative z-10 glow-blue" style="animation:float 6s ease-in-out infinite">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
+                                    <i data-lucide="compass" class="w-7 h-7 text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-white">AI Match Score</div>
+                                    <div class="text-sm text-surface-400">Personalized for You</div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-surface-400">Germany</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-32 h-2 bg-surface-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary-500 to-green-400 rounded-full" style="width:94%"></div></div>
+                                        <span class="text-sm font-semibold text-green-400">94%</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-surface-400">Italy</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-32 h-2 bg-surface-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary-500 to-blue-400 rounded-full" style="width:89%"></div></div>
+                                        <span class="text-sm font-semibold text-blue-400">89%</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-surface-400">Taiwan</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-32 h-2 bg-surface-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary-500 to-purple-400 rounded-full" style="width:85%"></div></div>
+                                        <span class="text-sm font-semibold text-purple-400">85%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t border-white/10">
+                                <div class="flex items-center justify-between text-sm"><span class="text-surface-400">Traditional Agency</span><span class="text-surface-500 line-through">$6,000+</span></div>
+                                <div class="flex items-center justify-between mt-1"><span class="text-surface-300 font-medium">ShikshaBridge</span><span class="text-green-400 font-bold">$50-100</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="absolute -bottom-4 -right-4 glass px-4 py-3 rounded-xl flex items-center gap-3" style="animation:floatSlow 5s ease-in-out infinite">
+                            <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"><i data-lucide="trending-up" class="w-5 h-5 text-green-400"></i></div>
+                            <div><div class="text-xs text-surface-400">Students Placed</div><div class="text-lg font-bold text-white">1,247</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
+            <span class="text-xs text-surface-500 tracking-widest uppercase">Scroll</span>
+            <div class="w-6 h-10 border-2 border-surface-600 rounded-full flex justify-center pt-2"><div class="w-1.5 h-3 bg-primary-400 rounded-full animate-bounce"></div></div>
+        </div>
+    </section>
+    
+    <section class="py-12 border-y border-white/5 overflow-hidden">
+        <div class="text-center mb-8"><span class="text-xs text-surface-500 tracking-widest uppercase">Trusted by Students Heading To</span></div>
+        <div class="relative">
+            <div class="marquee-track">
+                <div class="flex items-center gap-16 px-8">
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Germany</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Italy</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Taiwan</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Poland</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Norway</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Australia</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Canada</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">USA</span></div>
+                </div>
+                <div class="flex items-center gap-16 px-8">
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Germany</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Italy</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Taiwan</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Poland</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Norway</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Australia</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">Canada</span></div>
+                    <div class="flex items-center gap-3 text-surface-500 hover:text-white transition-colors"><i data-lucide="map-pin" class="w-5 h-5"></i><span class="font-semibold whitespace-nowrap">USA</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section id="stats" class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-surface-950 via-primary-950/20 to-surface-950"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-xs text-primary-400 tracking-widest uppercase font-semibold">Our Impact</span>
+                <h2 class="mt-4 text-4xl md:text-5xl font-display font-bold">Numbers That Matter</h2>
+                <p class="mt-4 text-surface-400 max-w-2xl mx-auto">Every statistic represents a dream fulfilled, a family supported, a future reimagined.</p>
+            </div>
+            
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="glass rounded-2xl p-8 text-center card-hover spotlight" data-spotlight>
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary-500/10 flex items-center justify-center"><i data-lucide="users" class="w-8 h-8 text-primary-400"></i></div>
+                    <div class="text-4xl md:text-5xl font-bold gradient-text-blue counter-value" data-target="1247">0</div>
+                    <div class="mt-2 text-sm text-surface-400">Students Guided</div>
+                    <div class="mt-1 text-xs text-surface-600">Since 2024</div>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 text-center card-hover spotlight" data-spotlight>
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-green-500/10 flex items-center justify-center"><i data-lucide="wallet" class="w-8 h-8 text-green-400"></i></div>
+                    <div class="text-4xl md:text-5xl font-bold text-green-400 counter-value" data-target="52">0</div>
+                    <div class="mt-2 text-sm text-surface-400">Crore BDT Saved</div>
+                    <div class="mt-1 text-xs text-surface-600">vs Traditional Agencies</div>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 text-center card-hover spotlight" data-spotlight>
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-purple-500/10 flex items-center justify-center"><i data-lucide="globe" class="w-8 h-8 text-purple-400"></i></div>
+                    <div class="text-4xl md:text-5xl font-bold text-purple-400 counter-value" data-target="15">0</div>
+                    <div class="mt-2 text-sm text-surface-400">Countries Covered</div>
+                    <div class="mt-1 text-xs text-surface-600">And Growing</div>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 text-center card-hover spotlight" data-spotlight>
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent-500/10 flex items-center justify-center"><i data-lucide="heart" class="w-8 h-8 text-accent-400"></i></div>
+                    <div class="text-4xl md:text-5xl font-bold text-accent-400 counter-value" data-target="98">0</div>
+                    <div class="mt-2 text-sm text-surface-400">% Satisfaction</div>
+                    <div class="mt-1 text-xs text-surface-600">Student Rated</div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+    
+    <section id="features" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <span class="text-xs text-primary-400 tracking-widest uppercase font-semibold">Platform</span>
+                <h2 class="mt-4 text-4xl md:text-5xl font-display font-bold">Built for Your Success</h2>
+                <p class="mt-4 text-surface-400 max-w-2xl mx-auto">Every feature designed to remove barriers and amplify opportunities.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="group glass rounded-2xl p-8 card-hover spotlight relative overflow-hidden" data-spotlight>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="brain-circuit" class="w-7 h-7 text-white"></i></div>
+                        <h3 class="text-xl font-bold mb-3">Intelligent Matching</h3>
+                        <p class="text-surface-400 text-sm leading-relaxed mb-4">Our algorithm analyzes your academic profile, financial constraints, career goals, and personal priorities to find your optimal study destination.</p>
+                        <div class="flex items-center gap-2 text-primary-400 text-sm font-medium"><span>94% match accuracy</span><i data-lucide="arrow-up-right" class="w-4 h-4"></i></div>
+                    </div>
+                </div>
+                
+                <div class="group glass rounded-2xl p-8 card-hover spotlight relative overflow-hidden" data-spotlight>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl group-hover:bg-green-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="pie-chart" class="w-7 h-7 text-white"></i></div>
+                        <h3 class="text-xl font-bold mb-3">Financial Clarity</h3>
+                        <p class="text-surface-400 text-sm leading-relaxed mb-4">Real cost breakdowns including tuition, living expenses, work potential, and remittance capacity. No surprises, ever.</p>
+                        <div class="flex items-center gap-2 text-green-400 text-sm font-medium"><span>Full transparency</span><i data-lucide="arrow-up-right" class="w-4 h-4"></i></div>
+                    </div>
+                </div>
+                
+                <div class="group glass rounded-2xl p-8 card-hover spotlight relative overflow-hidden" data-spotlight>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="file-check" class="w-7 h-7 text-white"></i></div>
+                        <h3 class="text-xl font-bold mb-3">Document Mastery</h3>
+                        <p class="text-surface-400 text-sm leading-relaxed mb-4">From SOP generation to document verification. AI-assisted drafting with human expert review ensures your application stands out.</p>
+                        <div class="flex items-center gap-2 text-purple-400 text-sm font-medium"><span>Zero rejection on docs</span><i data-lucide="arrow-up-right" class="w-4 h-4"></i></div>
+                    </div>
+                </div>
+                
+                <div class="group glass rounded-2xl p-8 card-hover spotlight relative overflow-hidden" data-spotlight>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-accent-500/10 rounded-full blur-3xl group-hover:bg-accent-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-500 to-orange-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="passport" class="w-7 h-7 text-white"></i></div>
+                        <h3 class="text-xl font-bold mb-3">Visa Navigation</h3>
+                        <p class="text-surface-400 text-sm leading-relaxed mb-4">Country-specific visa checklists, mock interviews, and embassy appointment guidance. We prepare you for every question.</p>
+                        <div class="flex items-center gap-2 text-accent-400 text-sm font-medium"><span>92% visa success rate</span><i data-lucide="arrow-up-right" class="w-4 h-4"></i></div>
+                    </div>
+                </div>
+                
+                <div class="group glass rounded-2xl p-8 card-hover spotlight relative overflow-hidden" data-spotlight>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="network" class="w-7 h-7 text-white"></i></div>
+                        <h3 class="text-xl font-bold mb-3">Global Community</h3>
+                        <p class="text-surface-400 text-sm leading-relaxed mb-4">Connect with verified alumni in your target country. From airport pickup to first job — you are never alone.</p>
+                        <div class="flex items-center gap-2 text-blue-400 text-sm font-medium"><span>500+ active mentors</span><i data-lucide="arrow-up-right" class="w-4 h-4"></i></div>
+                    </div>
+                </div>
+                
+                <div class="group glass rounded-2xl p-8 card-hover spotlight relative overflow-hidden" data-spotlight>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl group-hover:bg-pink-500/20 transition-all"></div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="briefcase" class="w-7 h-7 text-white"></i></div>
+                        <h3 class="text-xl font-bold mb-3">Work-Study Optimize</h3>
+                        <p class="text-surface-400 text-sm leading-relaxed mb-4">We prioritize destinations where you can work part-time, support your family, and build a career simultaneously.</p>
+                        <div class="flex items-center gap-2 text-pink-400 text-sm font-medium"><span>Family-first approach</span><i data-lucide="arrow-up-right" class="w-4 h-4"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section id="process" class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-surface-950 via-primary-950/10 to-surface-950"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-20">
+                <span class="text-xs text-primary-400 tracking-widest uppercase font-semibold">How It Works</span>
+                <h2 class="mt-4 text-4xl md:text-5xl font-display font-bold">Your Journey, Simplified</h2>
+                <p class="mt-4 text-surface-400">Five seamless steps from dream to departure.</p>
+            </div>
+            
+            <div class="relative">
+                <div class="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-500/0 via-primary-500/50 to-primary-500/0 -translate-y-1/2"></div>
+                
+                <div class="grid lg:grid-cols-5 gap-8 relative z-10">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">1</div>
+                        <h4 class="font-bold mb-2">Connect</h4>
+                        <p class="text-sm text-surface-600">Reach out via WhatsApp or form. Share your profile and aspirations.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">2</div>
+                        <h4 class="font-bold mb-2">Discover</h4>
+                        <p class="text-sm text-surface-600">30-min video call. We analyze your situation and present optimal options.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">3</div>
+                        <h4 class="font-bold mb-2">Prepare</h4>
+                        <p class="text-sm text-surface-600">Document checklists, SOP drafting, application forms — all guided.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">4</div>
+                        <h4 class="font-bold mb-2">Apply</h4>
+                        <p class="text-sm text-surface-600">Submit to universities with our support. Track progress in real-time.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">5</div>
+                        <h4 class="font-bold mb-2">Fly</h4>
+                        <p class="text-sm text-surface-600">Visa approved? Pre-departure kit, alumni connect, lifelong support.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section id="pricing" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="text-xs text-primary-400 tracking-widest uppercase font-semibold">Pricing</span>
+                <h2 class="mt-4 text-4xl md:text-5xl font-display font-bold">Transparent. Fair. Accessible.</h2>
+                <p class="mt-4 text-surface-400 max-w-2xl mx-auto">No hidden fees. No surprises. Choose the plan that fits your journey.</p>
+                
+                <div class="mt-8 inline-flex items-center gap-4 glass rounded-full px-6 py-3">
+                    <span class="text-surface-500 text-sm">Traditional Agency:</span>
+                    <span class="text-surface-400 line-through font-semibold">$6,000+</span>
+                    <span class="text-surface-600">→</span>
+                    <span class="text-green-400 font-bold">Our Range: $50-160</span>
+                    <span class="text-xs text-surface-500 bg-surface-800 px-2 py-1 rounded">99% savings</span>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div class="glass rounded-2xl p-8 card-hover relative">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-surface-600 to-surface-500 rounded-t-2xl"></div>
+                    <div class="mb-6"><h3 class="text-xl font-bold text-surface-300">Essential</h3><p class="text-sm text-surface-500 mt-1">For the self-driven student</p></div>
+                    <div class="mb-6"><span class="text-4xl font-bold text-white">$50</span><span class="text-surface-500"> / one-time</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5"></i><span>Profile analysis & country matching (3 options)</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5"></i><span>Document checklist per country</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5"></i><span>Application form guidance</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5"></i><span>Email support (48h response)</span></li>
+                    </ul>
+                    <a href="#contact" class="block w-full py-3 border border-surface-600 text-surface-300 text-center rounded-xl font-semibold hover:bg-surface-800 transition-all">Get Started</a>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 card-hover relative glow-blue transform lg:-translate-y-4">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2"><span class="bg-gradient-to-r from-primary-500 to-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full">MOST POPULAR</span></div>
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-purple-600 rounded-t-2xl"></div>
+                    <div class="mb-6"><h3 class="text-xl font-bold text-white">Professional</h3><p class="text-sm text-surface-400 mt-1">Full-service guidance</p></div>
+                    <div class="mb-6"><span class="text-4xl font-bold gradient-text">$100</span><span class="text-surface-500"> / one-time</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-start gap-3 text-sm text-surface-300"><i data-lucide="check" class="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"></i><span>Everything in Essential, plus:</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300"><i data-lucide="check" class="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"></i><span>5 university shortlist with deadlines</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300"><i data-lucide="check" class="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"></i><span>AI SOP draft + human expert edit</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300"><i data-lucide="check" class="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"></i><span>Scholarship search & application help</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300"><i data-lucide="check" class="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"></i><span>Visa mock interview session</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300"><i data-lucide="check" class="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"></i><span>Pre-departure preparation kit</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300"><i data-lucide="check" class="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"></i><span>WhatsApp priority support (24h)</span></li>
+                    </ul>
+                    <a href="#contact" class="block w-full py-3 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-center rounded-xl font-semibold hover:opacity-90 transition-all glow-blue">Choose Professional</a>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 card-hover relative">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent-500 to-orange-600 rounded-t-2xl"></div>
+                    <div class="mb-6"><h3 class="text-xl font-bold text-surface-300">Premium</h3><p class="text-sm text-surface-500 mt-1">White-glove experience</p></div>
+                    <div class="mb-6"><span class="text-4xl font-bold text-white">$160</span><span class="text-surface-500"> / one-time</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-accent-400 flex-shrink-0 mt-0.5"></i><span>Everything in Professional, plus:</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-accent-400 flex-shrink-0 mt-0.5"></i><span>10 university shortlist</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-accent-400 flex-shrink-0 mt-0.5"></i><span>Priority mentor matching (alumni)</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-accent-400 flex-shrink-0 mt-0.5"></i><span>Financial planning deep-dive</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-accent-400 flex-shrink-0 mt-0.5"></i><span>Post-arrival 3-month support</span></li>
+                        <li class="flex items-start gap-3 text-sm text-surface-400"><i data-lucide="check" class="w-5 h-5 text-accent-400 flex-shrink-0 mt-0.5"></i><span>Dedicated counselor assignment</span></li>
+                    </ul>
+                    <a href="#contact" class="block w-full py-3 border border-accent-600 text-accent-400 text-center rounded-xl font-semibold hover:bg-accent-600/10 transition-all">Choose Premium</a>
+                </div>
+            </div>
+            
+            <div class="mt-12 text-center">
+                <div class="inline-flex items-center gap-3 glass rounded-full px-6 py-3">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-green-400"></i>
+                    <span class="text-sm text-surface-300">7-Day Money-Back Guarantee: If we cannot identify viable options for your profile, full refund. No questions asked.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section id="stories" class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-surface-950 via-primary-950/10 to-surface-950"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-xs text-primary-400 tracking-widest uppercase font-semibold">Success Stories</span>
+                <h2 class="mt-4 text-4xl md:text-5xl font-display font-bold">Real Journeys, Real Impact</h2>
+                <p class="mt-4 text-surface-400 max-w-2xl mx-auto">Every story represents courage, determination, and a bridge crossed.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass rounded-2xl overflow-hidden card-hover">
+                    <div class="h-48 bg-gradient-to-br from-primary-600 to-purple-700 relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center"><div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur flex items-center justify-center"><i data-lucide="user" class="w-10 h-10 text-white"></i></div></div>
+                        <div class="absolute bottom-4 left-4"><span class="bg-white/20 backdrop-blur text-white text-xs px-3 py-1 rounded-full">Germany</span></div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="font-bold text-lg mb-1">Medical Graduate</h3>
+                        <p class="text-sm text-surface-500 mb-4">MBBS → Specialization in Berlin</p>
+                        <p class="text-sm text-surface-400 leading-relaxed mb-4">"ShikshaBridge identified Germany as my optimal path — zero tuition, strong work rights, and a clear route to residency. I now earn €1,200 monthly while specializing."</p>
+                        <div class="flex items-center gap-4 text-xs text-surface-500">
+                            <span class="flex items-center gap-1"><i data-lucide="wallet" class="w-3 h-3"></i>Saves €800/month</span>
+                            <span class="flex items-center gap-1"><i data-lucide="send" class="w-3 h-3"></i>Sends €300 home</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-2xl overflow-hidden card-hover">
+                    <div class="h-48 bg-gradient-to-br from-green-600 to-emerald-700 relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center"><div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur flex items-center justify-center"><i data-lucide="user" class="w-10 h-10 text-white"></i></div></div>
+                        <div class="absolute bottom-4 left-4"><span class="bg-white/20 backdrop-blur text-white text-xs px-3 py-1 rounded-full">Italy</span></div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="font-bold text-lg mb-1">BSc Graduate</h3>
+                        <p class="text-sm text-surface-500 mb-4">Computer Science → Masters in Milan</p>
+                        <p class="text-sm text-surface-400 leading-relaxed mb-4">"Family income was under $250/month. Through ISEE application, my tuition became €0. ShikshaBridge guided every document. I'm now in my second year, working part-time."</p>
+                        <div class="flex items-center gap-4 text-xs text-surface-500">
+                            <span class="flex items-center gap-1"><i data-lucide="wallet" class="w-3 h-3"></i>Tuition: €0</span>
+                            <span class="flex items-center gap-1"><i data-lucide="briefcase" class="w-3 h-3"></i>Works 20 hrs/week</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-2xl overflow-hidden card-hover">
+                    <div class="h-48 bg-gradient-to-br from-accent-500 to-orange-600 relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center"><div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur flex items-center justify-center"><i data-lucide="user" class="w-10 h-10 text-white"></i></div></div>
+                        <div class="absolute bottom-4 left-4"><span class="bg-white/20 backdrop-blur text-white text-xs px-3 py-1 rounded-full">Taiwan</span></div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="font-bold text-lg mb-1">Unemployed Graduate</h3>
+                        <p class="text-sm text-surface-500 mb-4">BA → MBA in Taipei</p>
+                        <p class="text-sm text-surface-400 leading-relaxed mb-4">"After 2 years unemployed, I had lost hope. ShikshaBridge matched me with Taiwan — 85% scholarship probability for my profile. I received full funding and now intern at a tech firm."</p>
+                        <div class="flex items-center gap-4 text-xs text-surface-500">
+                            <span class="flex items-center gap-1"><i data-lucide="award" class="w-3 h-3"></i>Full Scholarship</span>
+                            <span class="flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i>Internship secured</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section id="faq" class="py-24 relative">
+        <div class="max-w-3xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="text-xs text-primary-400 tracking-widest uppercase font-semibold">FAQ</span>
+                <h2 class="mt-4 text-4xl md:text-5xl font-display font-bold">Common Questions</h2>
+                <p class="mt-4 text-surface-400">Transparency is our core value. Everything you need to know.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <span class="font-semibold text-white">Why is your pricing so much lower than traditional agencies?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-surface-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6">
+                        <p class="pb-5 text-surface-400 text-sm leading-relaxed">We operate on a mission-first model. Traditional agencies charge $6,000+ because they prioritize profit margins and luxury office spaces. We leverage technology (AI matching, automated document processing) and a lean remote team to reduce overhead. Our goal is accessibility, not extraction. Every student helped is our success metric.</p>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <span class="font-semibold text-white">Do you guarantee university admission or visa approval?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-surface-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6">
+                        <p class="pb-5 text-surface-400 text-sm leading-relaxed">No ethical consultancy can guarantee admission or visas — those decisions rest with universities and embassies. What we guarantee is: (1) thorough profile analysis to identify realistic options, (2) error-free document preparation, (3) strategic application positioning, and (4) unwavering support throughout. Our 92% visa success rate speaks to our preparation quality.</p>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <span class="font-semibold text-white">I have financial constraints. Can I still study abroad?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-surface-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6">
+                        <p class="pb-5 text-surface-400 text-sm leading-relaxed">Absolutely. Many of our students come from families earning under $300/month. We specialize in identifying: (1) countries with zero/low tuition (Germany, Norway, Italy with ISEE), (2) strong part-time work rights to offset living costs, (3) scholarship opportunities, and (4) education loan pathways. Our "Essential" plan at $50 is specifically designed for budget-conscious students.</p>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <span class="font-semibold text-white">How does the AI matching work?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-surface-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6">
+                        <p class="pb-5 text-surface-400 text-sm leading-relaxed">Our algorithm evaluates 40+ data points: academic scores, language proficiency, financial capacity, family obligations, work preferences, career goals, and cultural preferences. It cross-references these against our database of 15+ countries, 200+ universities, and real-time visa acceptance data. The result: a ranked list of destinations optimized for your unique situation.</p>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <span class="font-semibold text-white">What documents do I need to get started?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-surface-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6">
+                        <p class="pb-5 text-surface-400 text-sm leading-relaxed">To begin, we only need: (1) academic transcripts/mark sheets, (2) passport copy, (3) basic financial overview (family income estimate), and (4) your career goals. No IELTS required to start — we help you plan the language test timeline. All documents are encrypted and never shared without your explicit consent.</p>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-xl overflow-hidden">
+                    <button class="w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <span class="font-semibold text-white">Is ShikshaBridge legally registered?</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-surface-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6">
+                        <p class="pb-5 text-surface-400 text-sm leading-relaxed">Yes. We are a registered sole proprietorship with valid Trade License and TIN (Tax Identification Number) in Bangladesh. We issue official invoices for every payment, maintain transparent financial records, and operate under a formal service agreement with each student. Our registration details are available upon request.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <section id="contact" class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-surface-950 via-primary-950/20 to-surface-950"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <span class="text-xs text-primary-400 tracking-widest uppercase font-semibold">Get Started</span>
+                    <h2 class="mt-4 text-4xl md:text-5xl font-display font-bold mb-6">Ready to Begin Your Journey?</h2>
+                    <p class="text-surface-400 text-lg mb-8 leading-relaxed">Take the first step toward your global education. Our team responds within 2 hours during business hours. Every inquiry is handled with confidentiality and care.</p>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center flex-shrink-0"><i data-lucide="message-circle" class="w-6 h-6 text-primary-400"></i></div>
+                            <div>
+                                <h4 class="font-semibold text-white">WhatsApp</h4>
+                                <p class="text-surface-400 text-sm">Primary channel for quick responses</p>
+                                <a href="https://wa.me/8801XXXXXXXXX" target="_blank" class="text-primary-400 text-sm hover:text-primary-300 transition">+880 1XX-XXXXXXX</a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0"><i data-lucide="mail" class="w-6 h-6 text-purple-400"></i></div>
+                            <div>
+                                <h4 class="font-semibold text-white">Email</h4>
+                                <p class="text-surface-400 text-sm">For detailed inquiries and document sharing</p>
+                                <a href="mailto:hello@shikshabridge.org" class="text-purple-400 text-sm hover:text-purple-300 transition">hello@shikshabridge.org</a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0"><i data-lucide="clock" class="w-6 h-6 text-green-400"></i></div>
+                            <div>
+                                <h4 class="font-semibold text-white">Response Time</h4>
+                                <p class="text-surface-400 text-sm">We prioritize every message</p>
+                                <span class="text-green-400 text-sm">Within 2 hours (9 AM - 9 PM BDT)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-10 flex flex-wrap gap-3">
+                        <div class="flex items-center gap-2 glass px-3 py-2 rounded-lg text-xs text-surface-400"><i data-lucide="shield-check" class="w-4 h-4 text-green-400"></i>Registered Business</div>
+                        <div class="flex items-center gap-2 glass px-3 py-2 rounded-lg text-xs text-surface-400"><i data-lucide="file-text" class="w-4 h-4 text-primary-400"></i>Official Invoices</div>
+                        <div class="flex items-center gap-2 glass px-3 py-2 rounded-lg text-xs text-surface-400"><i data-lucide="lock" class="w-4 h-4 text-purple-400"></i>Encrypted Data</div>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 relative">
+                    <div class="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500 to-transparent"></div>
+                    <h3 class="text-xl font-bold mb-6">Free Assessment Request</h3>
+                    
+                    <form id="leadForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                        <div class="grid md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm text-surface-400 mb-2">Full Name *</label>
+                                <input type="text" name="name" required class="w-full px-4 py-3 bg-surface-900/50 border border-surface-700 rounded-xl text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="Your name">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-surface-400 mb-2">WhatsApp Number *</label>
+                                <input type="tel" name="phone" required class="w-full px-4 py-3 bg-surface-900/50 border border-surface-700 rounded-xl text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="+880 1XX-XXXXXXX">
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm text-surface-400 mb-2">Current Education *</label>
+                                <select name="education" required class="w-full px-4 py-3 bg-surface-900/50 border border-surface-700 rounded-xl text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all appearance-none">
+                                    <option value="">Select level</option>
+                                    <option value="hsc">HSC / A-Levels</option>
+                                    <option value="bsc">BSc / BA / BBA (Running/Completed)</option>
+                                    <option value="mbbs">MBBS (Running/Completed)</option>
+                                    <option value="masters">Masters Completed</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-surface-400 mb-2">Field of Study</label>
+                                <input type="text" name="field" class="w-full px-4 py-3 bg-surface-900/50 border border-surface-700 rounded-xl text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all" placeholder="e.g., Computer Science, Medicine">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-surface-400 mb-2">Family Monthly Income (USD equivalent) *</label>
+                            <select name="income" required class="w-full px-4 py-3 bg-surface-900/50 border border-surface-700 rounded-xl text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all appearance-none">
+                                <option value="">Select range</option>
+                                <option value="below-200">Below $200</option>
+                                <option value="200-500">$200 - $500</option>
+                                <option value="500-1000">$500 - $1,000</option>
+                                <option value="above-1000">Above $1,000</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-surface-400 mb-3">Do you need to support family financially? *</label>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="remittance" value="yes-urgent" required class="w-4 h-4 text-primary-500 accent-primary-500"><span class="text-sm text-surface-300">Yes, urgently</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="remittance" value="yes-sometimes" class="w-4 h-4 text-primary-500 accent-primary-500"><span class="text-sm text-surface-300">Yes, sometimes</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="remittance" value="no" class="w-4 h-4 text-primary-500 accent-primary-500"><span class="text-sm text-surface-300">No, self-sufficient</span></label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-surface-400 mb-2">Preferred Destination (if any)</label>
+                            <select name="country" class="w-full px-4 py-3 bg-surface-900/50 border border-surface-700 rounded-xl text-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all appearance-none">
+                                <option value="">Not sure / Need guidance</option>
+                                <option value="germany">Germany</option>
+                                <option value="italy">Italy</option>
+                                <option value="taiwan">Taiwan</option>
+                                <option value="poland">Poland</option>
+                                <option value="norway">Norway</option>
+                                <option value="australia">Australia</option>
+                                <option value="canada">Canada</option>
+                                <option value="usa">USA</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-surface-400 mb-2">Your Biggest Challenge Right Now</label>
+                            <textarea name="challenge" rows="3" class="w-full px-4 py-3 bg-surface-900/50 border border-surface-700 rounded-xl text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none" placeholder="e.g., I don't have IELTS yet, I'm worried about finances, I have a study gap..."></textarea>
+                        </div>
+                        
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" required id="consent" class="w-5 h-5 mt-0.5 text-primary-500 accent-primary-500 rounded">
+                            <label for="consent" class="text-sm text-surface-400 leading-relaxed">I consent to ShikshaBridge processing my information for educational counseling purposes. I understand my data is encrypted and never sold to third parties. *</label>
+                        </div>
+                        
+                        <button type="submit" id="submitBtn" class="w-full py-4 bg-gradient-to-r from-primary-600 to-purple-600 text-white font-semibold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 glow-blue">
+                            <span id="btnText">Submit & Get Free Assessment</span>
+                            <i data-lucide="send" class="w-5 h-5" id="btnIcon"></i>
+                        </button>
+                        
+                        <p class="text-center text-xs text-surface-600"><i data-lucide="lock" class="w-3 h-3 inline mr-1"></i>256-bit encrypted. Response within 2 hours.</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer class="border-t border-white/5 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="md:col-span-1">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center"><span class="text-white font-bold">SB</span></div>
+                        <div><span class="font-bold text-white">ShikshaBridge</span></div>
+                    </div>
+                    <p class="text-sm text-surface-500 leading-relaxed mb-4">Democratizing global education access through technology, transparency, and human empathy.</p>
+                    <div class="flex gap-3">
+                        <a href="#" class="w-9 h-9 rounded-lg bg-surface-800 flex items-center justify-center text-surface-400 hover:text-white hover:bg-primary-600 transition-all"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-surface-800 flex items-center justify-center text-surface-400 hover:text-white hover:bg-primary-600 transition-all"><i data-lucide="instagram" class="w-4 h-4"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-surface-800 flex items-center justify-center text-surface-400 hover:text-white hover:bg-primary-600 transition-all"><i data-lucide="linkedin" class="w-4 h-4"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-surface-800 flex items-center justify-center text-surface-400 hover:text-white hover:bg-primary-600 transition-all"><i data-lucide="youtube" class="w-4 h-4"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Services</h4>
+                    <ul class="space-y-3 text-sm text-surface-500">
+                        <li><a href="#features" class="hover:text-primary-400 transition">AI Profile Matching</a></li>
+                        <li><a href="#features" class="hover:text-primary-400 transition">Document Support</a></li>
+                        <li><a href="#features" class="hover:text-primary-400 transition">Visa Guidance</a></li>
+                        <li><a href="#features" class="hover:text-primary-400 transition">Financial Planning</a></li>
+                        <li><a href="#features" class="hover:text-primary-400 transition">Alumni Network</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Company</h4>
+                    <ul class="space-y-3 text-sm text-surface-500">
+                        <li><a href="#" class="hover:text-primary-400 transition">About Us</a></li>
+                        <li><a href="#stories" class="hover:text-primary-400 transition">Success Stories</a></li>
+                        <li><a href="#" class="hover:text-primary-400 transition">Careers</a></li>
+                        <li><a href="#" class="hover:text-primary-400 transition">Blog</a></li>
+                        <li><a href="#contact" class="hover:text-primary-400 transition">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Legal</h4>
+                    <ul class="space-y-3 text-sm text-surface-500">
+                        <li><a href="#" class="hover:text-primary-400 transition">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-primary-400 transition">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-primary-400 transition">Refund Policy</a></li>
+                        <li><a href="#" class="hover:text-primary-400 transition">Service Agreement</a></li>
+                        <li><a href="#" class="hover:text-primary-400 transition">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-surface-600">© 2026 ShikshaBridge. Registered Sole Proprietorship, Bangladesh.</div>
+                <div class="flex items-center gap-4 text-xs text-surface-600">
+                    <span class="flex items-center gap-1"><i data-lucide="shield" class="w-3 h-3"></i>Trade License: [Number]</span>
+                    <span class="flex items-center gap-1"><i data-lucide="hash" class="w-3 h-3"></i>TIN: [Number]</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <a href="https://wa.me/8801XXXXXXXXX" target="_blank" class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 hover:scale-110 transition-all duration-300 group">
+        <i data-lucide="message-circle" class="w-7 h-7"></i>
+        <span class="absolute right-full mr-3 bg-surface-800 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Chat on WhatsApp</span>
+    </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });
+        
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            gsap.to(loader, { opacity: 0, duration: 0.8, delay: 0.5, onComplete: () => { loader.style.display = 'none'; initAnimations(); }});
+        });
+        
+        const cursor = document.getElementById('cursor');
+        const cursorDot = document.getElementById('cursor-dot');
+        if (window.innerWidth > 1024) {
+            document.addEventListener('mousemove', (e) => {
+                gsap.to(cursor, { x: e.clientX - 10, y: e.clientY - 10, duration: 0.15 });
+                gsap.to(cursorDot, { x: e.clientX - 3, y: e.clientY - 3, duration: 0.05 });
+            });
+            document.addEventListener('mousedown', () => { cursor.style.transform = 'scale(0.8)'; });
+            document.addEventListener('mouseup', () => { cursor.style.transform = 'scale(1)'; });
+        }
+        
+        function initThreeJS() {
+            const canvas = document.getElementById('hero-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 200;
+            const posArray = new Float32Array(particlesCount * 3);
+            for (let i = 0; i < particlesCount * 3; i++) { posArray[i] = (Math.random() - 0.5) * 10; }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({ size: 0.02, color: 0x3b82f6, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            camera.position.z = 3;
+            let mouseX = 0, mouseY = 0;
+            document.addEventListener('mousemove', (e) => { mouseX = (e.clientX / window.innerWidth) * 2 - 1; mouseY = -(e.clientY / window.innerHeight) * 2 + 1; });
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                particlesMesh.rotation.x += 0.0005; particlesMesh.rotation.y += 0.0005;
+                particlesMesh.rotation.x += mouseY * 0.0005; particlesMesh.rotation.y += mouseX * 0.0005;
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+        }
+        
+        function initAnimations() {
+            gsap.registerPlugin(ScrollTrigger);
+            initThreeJS();
+            
+            ScrollTrigger.create({ start: 'top -80', end: 99999, toggleClass: { className: 'glass', targets: '#navbar' }});
+            
+            gsap.utils.toArray('.reveal-text').forEach((el, i) => { gsap.to(el, { opacity: 1, y: 0, duration: 1, delay: i * 0.15, ease: 'power3.out' }); });
+            
+            gsap.utils.toArray('.section-fade').forEach((el) => { gsap.to(el, { scrollTrigger: { trigger: el, start: 'top 80%', toggleActions: 'play none none reverse' }, opacity: 1, y: 0, duration: 1, ease: 'power3.out' }); });
+            
+            gsap.utils.toArray('.counter-value').forEach((counter) => {
+                const target = parseInt(counter.getAttribute('data-target'));
+                ScrollTrigger.create({ trigger: counter, start: 'top 80%', onEnter: () => { gsap.to(counter, { innerHTML: target, duration: 2, snap: { innerHTML: 1 }, ease: 'power2.out', onUpdate: function() { counter.innerHTML = Math.round(this.targets()[0].innerHTML); if (target > 100) counter.innerHTML += '+'; } }); }, once: true });
+            });
+            
+            gsap.utils.toArray('.card-hover').forEach((card, i) => { gsap.from(card, { scrollTrigger: { trigger: card, start: 'top 85%' }, opacity: 0, y: 40, duration: 0.8, delay: i * 0.1, ease: 'power3.out' }); });
+            
+            document.querySelectorAll('[data-spotlight]').forEach(el => {
+                el.addEventListener('mousemove', (e) => { const rect = el.getBoundingClientRect(); el.style.setProperty('--x', `${e.clientX - rect.left}px`); el.style.setProperty('--y', `${e.clientY - rect.top}px`); });
+            });
+        }
+        
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+        
+        function toggleAccordion(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('[data-lucide="chevron-down"]');
+            const isOpen = content.classList.contains('open');
+            document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('open'));
+            document.querySelectorAll('[data-lucide="chevron-down"]').forEach(i => { i.style.transform = 'rotate(0deg)'; });
+            if (!isOpen) { content.classList.add('open'); icon.style.transform = 'rotate(180deg)'; }
+        }
+        
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            
+            btnText.textContent = 'Sending...';
+            btnIcon.setAttribute('data-lucide', 'loader-2'); btnIcon.classList.add('animate-spin');
+            lucide.createIcons(); btn.disabled = true; btn.classList.add('opacity-70');
+            
+            setTimeout(() => {
+                btnText.textContent = 'Submitted Successfully!';
+                btnIcon.setAttribute('data-lucide', 'check-circle'); btnIcon.classList.remove('animate-spin');
+                lucide.createIcons();
+                btn.classList.remove('from-primary-600', 'to-purple-600'); btn.classList.add('from-green-600', 'to-emerald-600');
+                document.getElementById('leadForm').reset();
+                
+                setTimeout(() => {
+                    btnText.textContent = 'Submit & Get Free Assessment';
+                    btnIcon.setAttribute('data-lucide', 'send'); lucide.createIcons();
+                    btn.classList.add('from-primary-600', 'to-purple-600'); btn.classList.remove('from-green-600', 'to-emerald-600');
+                    btn.disabled = false; btn.classList.remove('opacity-70');
+                }, 3000);
+            }, 2000);
+        }
+        
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => { const rect = btn.getBoundingClientRect(); const x = e.clientX - rect.left - rect.width / 2; const y = e.clientY - rect.top - rect.height / 2; gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3, ease: 'power2.out' }); });
+            btn.addEventListener('mouseleave', () => { gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.3)' }); });
+        });
+        
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) { e.preventDefault(); const target = document.querySelector(this.getAttribute('href')); if (target) { gsap.to(window, { duration: 1, scrollTo: { y: target, offsetY: 80 }, ease: 'power3.inOut' }); } });
+        });
+        
+        gsap.utils.toArray('.float-animation').forEach((el) => { gsap.to(el, { scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: 1 }, y: -50, ease: 'none' }); });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+</body>
+</html>
